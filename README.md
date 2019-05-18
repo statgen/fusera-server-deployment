@@ -13,3 +13,7 @@ gcloud deployment-manager deployments create test-deployment --config igv-server
 ```shell
 gcloud compute ssh igv-server -- -L 8080:localhost:8080
 ```
+4. In IGV, go to `File > Open URL` and enter:
+```
+http://localhost:8080/<accession_id>/<sample_id>.b38.irc.v1.cram
+```
