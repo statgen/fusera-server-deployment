@@ -1,0 +1,72 @@
+{#
+Copyright 2016 Google Inc. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+#}
+
+resources:
+- name: {{ env["name"] }}
+  type: compute.v1.instance
+  properties:
+    zone: {{ properties["zone"] }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/n1-standard-1
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-1804-lts
+    networkInterfaces:
+      - network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/default
+        accessConfigs:
+        - name: External NAT
+          type: ONE_TO_ONE_NAT
+    serviceAccounts:
+      - scopes:
+        - "https://www.googleapis.com/auth/devstorage.read_only"
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          
+          INSTANCE=$(curl http://metadata.google.internal/computeMetadata/v1/instance/hostname -H "Metadata-Flavor: Google")
+          apt update && apt install -y apache2 curl ufw
+          ufw allow 22 && ufw enable
+          curl --silent -L https://github.com/mitre/fusera/releases/download/v0.0.17/fusera > /usr/local/bin/fusera
+          chmod +x /usr/local/bin/fusera
+          
+          gsutil -q cp {{ properties["ngc_uri"] }} /srv/token.ngc
+          gsutil -q cp {{ properties["accessions_uri"] }} /srv/accessions.txt
+           
+          #echo allow_other >> /etc/fuse.conf
+          mkdir -p /var/www/fusera
+          chown www-data:www-data /var/www/fusera
+          echo "fusera mount -a /srv/accessions.txt -t /srv/token.ngc /var/www/fusera &" > /srv/mount-fusera.sh
+          echo "disown %1" >> /srv/mount-fusera.sh 
+          chmod +x /srv/mount-fusera.sh 
+          sudo -u www-data /srv/mount-fusera.sh 
+ 
+          #echo "Waiting for fusera mount ..."
+          #for i in {1..10}
+          #do
+          #  sleep ${i}s
+          #  [ -f "/var/www/fusera/.initialized" ] && break
+          #  [[ $i == 10 ]] && (>&2 echo "Failed to mount fusera!") && exit -1
+          #done
+          #echo "Fusera initialized!"
+         
+          sed -i 's/html/fusera\n\t<Directory \/var\/www\/fusera>\n\t\tRequire host localhost\n\t<\/Directory>/' /etc/apache2/sites-available/000-default.conf
+          sed -i 's/:80>/:8080>/' /etc/apache2/sites-available/000-default.conf
+          echo "Listen 8080" > /etc/apache2/ports.conf
+          systemctl reload apache2 

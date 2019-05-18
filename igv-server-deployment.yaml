@@ -1,0 +1,10 @@
+imports:
+- path: igv-server-template.jinja
+
+resources:
+- name: igv-server
+  type: igv-server-template.jinja
+  properties:
+    zone: us-central1-a
+    ngc_uri: gs://<bucket-name>/<token.ngc>
+    accessions_uri: gs://<bucket-name>/<accessions.txt>
