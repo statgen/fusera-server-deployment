@@ -2,7 +2,7 @@
 
 ## Instructions
 
-1. Edit igv-server-template.jinja to specify object storage locations for your ngc file and accession IDs file. 
+1. Edit igv-server-deployment.yaml to specify object storage locations for your ngc file and accession IDs file. 
 
 2. Create the server that acts as a proxy:
 ```shell
