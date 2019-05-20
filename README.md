@@ -11,7 +11,7 @@ gcloud deployment-manager deployments create igv-server-deployment --config igv-
 
 3. Create an SSH tunnel to authenticate and encrypt your access to the data. There are 3 levels of security that prevent the proxy server from being accessed externally. SSH tunneling allows your client machine to make requests to the server. Exiting out of the SSH session will close the tunnel.
 ```shell
-gcloud compute ssh igv-server -- -L 8080:localhost:8080
+gcloud compute ssh igv-server -- -L 8080:localhost:80
 ```
 4. In IGV, go to `File > Open URL` and enter:
 ```

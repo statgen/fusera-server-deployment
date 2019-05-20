@@ -67,6 +67,5 @@ resources:
           #echo "Fusera initialized!"
          
           sed -i 's/html/fusera\n\t<Directory \/var\/www\/fusera>\n\t\tRequire host localhost\n\t<\/Directory>/' /etc/apache2/sites-available/000-default.conf
-          sed -i 's/:80>/:8080>/' /etc/apache2/sites-available/000-default.conf
-          echo "Listen 8080" > /etc/apache2/ports.conf
-          systemctl reload apache2 
+          echo "Listen 127.0.0.1:80" > /etc/apache2/ports.conf
+          systemctl restart apache2 
